@@ -4,7 +4,6 @@
     <application
         android:allowBackup="true"
         android:label="自进化 AI"
-        android:theme="@style/Theme.AppCompat.Light"
         android:supportsRtl="true">
         
         <activity
