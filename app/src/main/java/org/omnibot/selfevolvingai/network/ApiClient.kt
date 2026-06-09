@@ -3,73 +3,107 @@ package org.omnibot.selfevolvingai.network
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
-import org.json.JSONObject
 import java.io.IOException
 
-class ApiClient(private val apiKey: String, private val baseUrl: String) {
+class ApiClient(
+    private val apiKey: String,
+    private val baseUrl: String = "https://api.openai.com/v1"
+) {
+    private val client = OkHttpClient()
+    private val mediaType = "application/json; charset=utf-8".toMediaType()
     
-    private val client = OkHttpClient.Builder()
-        .addInterceptor { chain ->
-            val request = chain.request().newBuilder()
+    data class ChatRequest(
+        val model: String,
+        val messages: List<Message>,
+        val maxTokens: Int = 1024
+    )
+    
+    data class Message(
+        val role: String,
+        val content: String
+    )
+    
+    data class ChatResponse(
+        val choices: List<Choice>,
+        val usage: Usage?
+    )
+    
+    data class Choice(
+        val message: Message,
+        val finishReason: String?
+    )
+    
+    data class Usage(
+        val promptTokens: Int,
+        val completionTokens: Int,
+        val totalTokens: Int
+    )
+    
+    fun chat(request: ChatRequest): Result<String> {
+        return try {
+            val json = buildJson(request)
+            val body = json.toRequestBody(mediaType)
+            
+            val httpRequest = Request.Builder()
+                .url("$baseUrl/chat/completions")
                 .addHeader("Authorization", "Bearer $apiKey")
                 .addHeader("Content-Type", "application/json")
+                .post(body)
                 .build()
-            chain.proceed(request)
+            
+            val response = client.newCall(httpRequest).execute()
+            
+            if (response.isSuccessful) {
+                response.body?.string()?.let {
+                    Result.success(parseResponse(it))
+                } ?: Result.failure(IOException("Empty response"))
+            } else {
+                Result.failure(IOException("API Error: ${response.code}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
         }
-        .build()
-    
-    fun chat(messages: List<Map<String, String>>, model: String, callback: (String?, String?) -> Unit) {
-        val json = JSONObject()
-        json.put("model", model)
-        json.put("messages", org.json.JSONArray(messages.map { JSONObject(it) }))
-        
-        val request = Request.Builder()
-            .url("$baseUrl/chat/completions")
-            .post(json.toString().toRequestBody("application/json".toMediaType()))
-            .build()
-        
-        client.newCall(request).enqueue(object : Callback {
-            override fun onFailure(call: Call, e: IOException) {
-                callback(null, e.message)
-            }
-            
-            override fun onResponse(call: Call, response: Response) {
-                val body = response.body?.string()
-                if (response.isSuccessful && body != null) {
-                    try {
-                        val result = JSONObject(body)
-                        val content = result
-                            .getJSONObject("choices")
-                            .getJSONObject(0)
-                            .getJSONObject("message")
-                            .getString("content")
-                        callback(content, null)
-                    } catch (e: Exception) {
-                        callback(null, e.message)
-                    }
-                } else {
-                    callback(null, body ?: "请求失败")
-                }
-            }
-        })
     }
     
-    fun downloadFile(url: String, savePath: String, callback: (Boolean, String?) -> Unit) {
-        val request = Request.Builder().url(url).build()
-        
-        client.newCall(request).enqueue(object : Callback {
-            override fun onFailure(call: Call, e: IOException) {
-                callback(false, e.message)
-            }
-            
-            override fun onResponse(call: Call, response: Response) {
-                if (response.isSuccessful) {
-                    // TODO: 保存文件到 savePath
-                    callback(true, null)
-                } else {
-                    callback(false, "下载失败：${response.code}")
-                }
-            }
-        })
+    private fun buildJson(request: ChatRequest): String {
+        val messagesJson = request.messages.joinToString(",") { 
+            """{"role":"${it.role}","content":"${it.content}"}""" 
+        }
+        return """{
+            "model": "${request.model}",
+            "messages": [$messagesJson],
+            "max_tokens": ${request.maxTokens}
+        }"""
     }
+    
+    private fun parseResponse(json: String): String {
+        // 简单解析，实际应使用 Gson
+        return json
+    }
+    
+    suspend fun fetchSkills(): Result<List<SkillInfo>> {
+        return try {
+            val httpRequest = Request.Builder()
+                .url("https://raw.githubusercontent.com/omnibot-ai/omnibot/main/skills/index.json")
+                .get()
+                .build()
+            
+            val response = client.newCall(httpRequest).execute()
+            
+            if (response.isSuccessful) {
+                Result.success(emptyList()) // TODO: 解析技能列表
+            } else {
+                Result.failure(IOException("Fetch failed: ${response.code}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    
+    data class SkillInfo(
+        val id: String,
+        val name: String,
+        val description: String,
+        val url: String
+    )
 }
