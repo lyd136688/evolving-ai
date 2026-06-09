@@ -25,16 +25,9 @@ fun SkillsScreen() {
     }
     
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        Text(" 技能中心", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(bottom = 16.dp))
+        Text("📚 技能中心", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(bottom = 16.dp))
         
-        OutlinedTextField(
-            value = searchQuery,
-            onValueChange = { searchQuery = it },
-            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-            placeholder = { Text("搜索技能...") },
-            singleLine = true,
-            leadingIcon = { Text("🔍") }
-        )
+        OutlinedTextField(value = searchQuery, onValueChange = { searchQuery = it }, modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp), placeholder = { Text("搜索技能...") }, singleLine = true)
         
         LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             items(skills.filter { searchQuery.isBlank() || it.name.contains(searchQuery, ignoreCase = true) }) { skill ->
@@ -50,20 +43,12 @@ data class Skill(val id: String, val name: String, val description: String, val 
 fun SkillCard(skill: Skill) {
     Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(text = skill.name, style = MaterialTheme.typography.titleMedium)
                     Text(text = skill.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                if (skill.installed) {
-                    AssistChip(onClick = { }, label = { Text("已安装") })
-                } else {
-                    AssistChip(onClick = { }, label = { Text("安装") })
-                }
+                if (skill.installed) { AssistChip(onClick = { }, label = { Text("已安装") }) } else { AssistChip(onClick = { }, label = { Text("安装") }) }
             }
         }
     }
