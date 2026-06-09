@@ -2,12 +2,17 @@ package org.omnibot.selfevolvingai.ui
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen() {
     var apiKey by remember { mutableStateOf("") }
@@ -15,6 +20,7 @@ fun SettingsScreen() {
     var defaultModel by remember { mutableStateOf("gpt-3.5-turbo") }
     var workspacePath by remember { mutableStateOf("/workspace") }
     var autoSaveMemory by remember { mutableStateOf(true) }
+    var showApiKey by remember { mutableStateOf(false) }
     
     Column(
         modifier = Modifier
@@ -35,7 +41,13 @@ fun SettingsScreen() {
                 label = { Text("API Key") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                visualTransformation = PasswordVisualTransformation()
+                visualTransformation = if (showApiKey) VisualTransformation.None else PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                trailingIcon = {
+                    IconButton(onClick = { showApiKey = !showApiKey }) {
+                        Text(if (showApiKey) "🙈" else "️")
+                    }
+                }
             )
             Spacer(modifier = Modifier.height(16.dp))
             OutlinedTextField(
@@ -72,7 +84,8 @@ fun SettingsScreen() {
         SettingsSection("记忆系统") {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text("自动保存记忆", style = MaterialTheme.typography.bodyLarge)
                 Switch(checked = autoSaveMemory, onCheckedChange = { autoSaveMemory = it })
@@ -83,26 +96,33 @@ fun SettingsScreen() {
         
         SettingsSection("关于") {
             Text("版本：2.0.0", style = MaterialTheme.typography.bodyMedium)
-            Text("构建：2026-06-08", style = MaterialTheme.typography.bodyMedium)
-            Text("基于 Omnibot Agent 架构", style = MaterialTheme.typography.bodyMedium)
+            Text("构建：GitHub Actions", style = MaterialTheme.typography.bodyMedium)
+            Text("架构：NowInAndroid + Compose", style = MaterialTheme.typography.bodyMedium)
         }
         
         Spacer(modifier = Modifier.height(24.dp))
         
         Button(
-            onClick = { /* TODO: 保存设置 */ },
+            onClick = { },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("保存设置")
+            Text("💾 保存设置")
         }
     }
 }
 
 @Composable
 fun SettingsSection(title: String, content: @Composable () -> Unit) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = 16.dp))
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
             content()
         }
     }
