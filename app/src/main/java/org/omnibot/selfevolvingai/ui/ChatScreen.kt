@@ -9,23 +9,34 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
-import org.omnibot.selfevolvingai.network.ApiService
+import org.omnibot.selfevolvingai.llm.LocalLLMEngine
 import java.text.SimpleDateFormat
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatScreen() {
+fun ChatScreen(llmEngine: LocalLLMEngine) {
     var messages by remember { mutableStateOf(listOf<Message>()) }
     var input by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
-    var apiKey by remember { mutableStateOf("") }
-    var apiProvider by remember { mutableStateOf("DeepSeek") }
-    var model by remember { mutableStateOf("deepseek-chat") }
+    var isModelLoaded by remember { mutableStateOf(llmEngine.isModelLoaded()) }
     
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
-    val apiService = remember { ApiService() }
+    
+    LaunchedEffect(Unit) {
+        if (!isModelLoaded) {
+            isLoading = true
+            val result = llmEngine.loadModel()
+            result.onSuccess {
+                isModelLoaded = true
+                messages = messages + Message("system", "✅ $it")
+            }.onFailure {
+                messages = messages + Message("system", "❌ 模型加载失败：${it.message}\n请前往模型管理下载 Qwen2.5-7B-GGUF")
+            }
+            isLoading = false
+        }
+    }
     
     LaunchedEffect(messages.size) {
         scope.launch {
@@ -34,10 +45,21 @@ fun ChatScreen() {
     }
     
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        Text("💬 AI 对话", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(bottom = 8.dp))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("当前：$apiProvider - $model", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("💬 本地 AI 对话", style = MaterialTheme.typography.headlineMedium)
+            TextButton(onClick = {
+                messages = messages + Message("system", llmEngine.getMemoryStats())
+            }) {
+                Text(" 记忆状态")
+            }
         }
+        
+        Text(
+            if (isModelLoaded) "🟢 模型已加载 - 本地推理" else " 模型未加载",
+            style = MaterialTheme.typography.bodySmall,
+            color = if (isModelLoaded) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+        )
+        
         Spacer(modifier = Modifier.height(16.dp))
         
         LazyColumn(
@@ -58,38 +80,25 @@ fun ChatScreen() {
         
         Spacer(modifier = Modifier.height(16.dp))
         
-        if (apiKey.isBlank()) {
-            Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f))) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text("⚠️ 请先配置 API Key", style = MaterialTheme.typography.titleMedium)
-                    Text("前往 设置 页面配置 API Key 后即可使用对话功能", style = MaterialTheme.typography.bodySmall)
-                }
-            }
-        }
-        
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(
                 value = input,
                 onValueChange = { input = it },
                 modifier = Modifier.weight(1f),
-                placeholder = { Text("输入命令或问题...") },
+                placeholder = { Text("输入问题或命令...") },
                 maxLines = 4,
-                enabled = !isLoading && apiKey.isNotBlank()
+                enabled = !isLoading && isModelLoaded
             )
             Button(
                 onClick = {
-                    if (input.isNotBlank() && apiKey.isNotBlank()) {
+                    if (input.isNotBlank() && isModelLoaded) {
                         messages = messages + Message("user", input)
                         val userInput = input
                         input = ""
                         isLoading = true
+                        
                         scope.launch {
-                            val result = apiService.chat(
-                                apiKey = apiKey,
-                                baseUrl = ApiService.API_PROVIDERS[apiProvider] ?: "",
-                                model = model,
-                                messages = messages.map { ApiService.ChatMessage(it.role, it.content) }
-                            )
+                            val result = llmEngine.generate(userInput)
                             isLoading = false
                             result.onSuccess { response ->
                                 messages = messages + Message("assistant", response)
@@ -99,8 +108,40 @@ fun ChatScreen() {
                         }
                     }
                 },
-                enabled = input.isNotBlank() && !isLoading && apiKey.isNotBlank()
+                enabled = input.isNotBlank() && !isLoading && isModelLoaded
             ) { Text("发送") }
+        }
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            AssistChip(
+                onClick = {
+                    scope.launch {
+                        val result = llmEngine.selfImprove("请分析最近的对话，找出可以改进的地方")
+                        result.onSuccess { messages = messages + Message("assistant", "🔧 自改进：$it") }
+                    }
+                },
+                label = { Text("🔧 自改进") }
+            )
+            AssistChip(
+                onClick = {
+                    scope.launch {
+                        val result = llmEngine.selfLearn("记录当前对话内容到知识库")
+                        result.onSuccess { messages = messages + Message("assistant", "📚 自学习：$it") }
+                    }
+                },
+                label = { Text("📚 自学习") }
+            )
+            AssistChip(
+                onClick = {
+                    scope.launch {
+                        val result = llmEngine.selfArchitect("设计一个待办事项应用")
+                        result.onSuccess { messages = messages + Message("assistant", "🏗️ 自构架：$it") }
+                    }
+                },
+                label = { Text("🏗️ 自构架") }
+            )
         }
     }
 }
@@ -115,14 +156,27 @@ fun MessageBubble(message: Message) {
             containerColor = when (message.role) {
                 "user" -> MaterialTheme.colorScheme.primaryContainer
                 "assistant" -> MaterialTheme.colorScheme.secondaryContainer
+                "system" -> MaterialTheme.colorScheme.tertiaryContainer
                 else -> MaterialTheme.colorScheme.surfaceVariant
             }
         )
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(text = when (message.role) { "user" -> "👤 你" "assistant" -> "🤖 AI" else -> "ℹ️" }, style = MaterialTheme.typography.labelMedium)
-                Text(text = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(message.timestamp)), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    text = when (message.role) {
+                        "user" -> "👤 你"
+                        "assistant" -> "🤖 AI"
+                        "system" -> "ℹ️ 系统"
+                        else -> "消息"
+                    },
+                    style = MaterialTheme.typography.labelMedium
+                )
+                Text(
+                    text = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(message.timestamp)),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
             Spacer(modifier = Modifier.height(4.dp))
             Text(message.content, style = MaterialTheme.typography.bodyMedium)
