@@ -9,6 +9,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import org.omnibot.selfevolvingai.tools.ToolManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,7 +41,6 @@ fun FilesScreen() {
             modifier = Modifier.padding(bottom = 16.dp)
         )
         
-        // 路径导航
         Card(modifier = Modifier.fillMaxWidth()) {
             Row(
                 modifier = Modifier
@@ -103,6 +103,7 @@ fun parseLsOutput(output: String): List<FileInfo> {
         }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FileCard(file: FileInfo, onNavigate: () -> Unit) {
     Card(
@@ -117,7 +118,7 @@ fun FileCard(file: FileInfo, onNavigate: () -> Unit) {
         ) {
             Row {
                 Text(
-                    text = if (file.type == "dir") "📁" else "📄",
+                    text = if (file.type == "dir") "📁" else "",
                     modifier = Modifier.padding(end = 12.dp)
                 )
                 Text(file.name, style = MaterialTheme.typography.bodyMedium)
