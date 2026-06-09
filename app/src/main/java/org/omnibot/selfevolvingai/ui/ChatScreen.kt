@@ -19,7 +19,7 @@ fun ChatScreen(llmEngine: LocalLLMEngine) {
     var messages by remember { mutableStateOf(listOf<Message>()) }
     var input by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
-    var isModelLoaded by remember { mutableStateOf(llmEngine.isModelLoaded()) }
+    val isModelLoaded = llmEngine.isModelLoaded()
     
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
@@ -29,7 +29,6 @@ fun ChatScreen(llmEngine: LocalLLMEngine) {
             isLoading = true
             val result = llmEngine.loadModel()
             result.onSuccess {
-                isModelLoaded = true
                 messages = messages + Message("system", "✅ $it")
             }.onFailure {
                 messages = messages + Message("system", "❌ 模型加载失败：${it.message}\n请前往模型管理下载 Qwen2.5-7B-GGUF")
@@ -50,12 +49,12 @@ fun ChatScreen(llmEngine: LocalLLMEngine) {
             TextButton(onClick = {
                 messages = messages + Message("system", llmEngine.getMemoryStats())
             }) {
-                Text(" 记忆状态")
+                Text("记忆状态")
             }
         }
         
         Text(
-            if (isModelLoaded) "🟢 模型已加载 - 本地推理" else " 模型未加载",
+            if (isModelLoaded) "🟢 模型已加载 - 本地推理" else "🔴 模型未加载",
             style = MaterialTheme.typography.bodySmall,
             color = if (isModelLoaded) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
         )
