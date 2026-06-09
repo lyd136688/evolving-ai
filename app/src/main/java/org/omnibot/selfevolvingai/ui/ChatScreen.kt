@@ -9,6 +9,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import org.omnibot.selfevolvingai.network.ApiService
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -18,8 +19,13 @@ fun ChatScreen() {
     var messages by remember { mutableStateOf(listOf<Message>()) }
     var input by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
+    var apiKey by remember { mutableStateOf("") }
+    var apiProvider by remember { mutableStateOf("DeepSeek") }
+    var model by remember { mutableStateOf("deepseek-chat") }
+    
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
+    val apiService = remember { ApiService() }
     
     LaunchedEffect(messages.size) {
         scope.launch {
@@ -37,8 +43,24 @@ fun ChatScreen() {
         Text(
             "💬 AI 对话",
             style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(bottom = 16.dp)
+            modifier = Modifier.padding(bottom = 8.dp)
         )
+        
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                "当前：$apiProvider - $model",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            TextButton(onClick = { /* 打开设置 */ }) {
+                Text("⚙️ 配置")
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(16.dp))
         
         LazyColumn(
             state = listState,
@@ -67,6 +89,24 @@ fun ChatScreen() {
         
         Spacer(modifier = Modifier.height(16.dp))
         
+        if (apiKey.isBlank()) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.warningContainer
+                )
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text("⚠️ 请先配置 API Key", style = MaterialTheme.typography.titleMedium)
+                    Text("前往 设置 页面配置 API Key 后即可使用对话功能", style = MaterialTheme.typography.bodySmall)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(onClick = { /* 导航到设置 */ }) {
+                        Text("去配置")
+                    }
+                }
+            }
+        }
+        
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -76,17 +116,35 @@ fun ChatScreen() {
                 onValueChange = { input = it },
                 modifier = Modifier.weight(1f),
                 placeholder = { Text("输入命令或问题...") },
-                maxLines = 4
+                maxLines = 4,
+                enabled = !isLoading && apiKey.isNotBlank()
             )
             Button(
                 onClick = {
-                    if (input.isNotBlank()) {
+                    if (input.isNotBlank() && apiKey.isNotBlank()) {
                         messages = messages + Message("user", input)
+                        val userInput = input
                         input = ""
                         isLoading = true
+                        
+                        scope.launch {
+                            val result = apiService.chat(
+                                apiKey = apiKey,
+                                baseUrl = ApiService.API_PROVIDERS[apiProvider] ?: "",
+                                model = model,
+                                messages = messages.map { ApiService.ChatMessage(it.role, it.content) }
+                            )
+                            
+                            isLoading = false
+                            result.onSuccess { response ->
+                                messages = messages + Message("assistant", response)
+                            }.onFailure { error ->
+                                messages = messages + Message("assistant", "❌ 错误：${error.message}")
+                            }
+                        }
                     }
                 },
-                enabled = input.isNotBlank() && !isLoading
+                enabled = input.isNotBlank() && !isLoading && apiKey.isNotBlank()
             ) {
                 Text("发送")
             }
@@ -101,10 +159,11 @@ fun MessageBubble(message: Message) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = if (message.role == "user") 
-                MaterialTheme.colorScheme.primaryContainer 
-            else 
-                MaterialTheme.colorScheme.secondaryContainer
+            containerColor = when (message.role) {
+                "user" -> MaterialTheme.colorScheme.primaryContainer
+                "assistant" -> MaterialTheme.colorScheme.secondaryContainer
+                else -> MaterialTheme.colorScheme.surfaceVariant
+            }
         )
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
@@ -113,7 +172,11 @@ fun MessageBubble(message: Message) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = if (message.role == "user") " 你" else "🤖 AI",
+                    text = when (message.role) {
+                        "user" -> "👤 你"
+                        "assistant" -> "🤖 AI"
+                        else -> "ℹ️ 系统"
+                    },
                     style = MaterialTheme.typography.labelMedium
                 )
                 Text(
