@@ -11,17 +11,15 @@ class ApiService {
         private val MEDIA_TYPE = "application/json; charset=utf-8".toMediaType()
         
         val API_PROVIDERS = mapOf(
-            "OpenAI" to "https://api.openai.com/v1",
             "DeepSeek" to "https://api.deepseek.com/v1",
             "智谱 AI" to "https://open.bigmodel.cn/api/paas/v4",
             "通义千问" to "https://dashscope.aliyuncs.com/compatible-mode/v1",
-            "文心一言" to "https://qianfan.baidubce.com/v2",
+            "OpenAI" to "https://api.openai.com/v1",
             "月之暗面" to "https://api.moonshot.cn/v1"
         )
     }
     
     data class ChatMessage(val role: String, val content: String)
-    data class ChatRequest(val model: String, val messages: List<ChatMessage>, val maxTokens: Int = 2048)
     
     fun chat(apiKey: String, baseUrl: String, model: String, messages: List<ChatMessage>): Result<String> {
         return try {
@@ -31,15 +29,10 @@ class ApiService {
                 .build()
             
             val messagesJson = messages.joinToString(",") { 
-                """{"role":"${it.role}","content":"${it.content.replace("\"", "\\\"")}"}""" 
+                """{"role":"${it.role}","content":"${it.content.replace("\"", "\\\"").replace("\n", "\\n")}"}""" 
             }
             
-            val jsonBody = """{
-                "model": "$model",
-                "messages": [$messagesJson],
-                "max_tokens": 2048,
-                "stream": false
-            }""".trimIndent()
+            val jsonBody = """{"model": "$model", "messages": [$messagesJson], "max_tokens": 2048, "stream": false}""".trimIndent()
             
             val request = Request.Builder()
                 .url("$baseUrl/chat/completions")
@@ -52,27 +45,12 @@ class ApiService {
             
             if (response.isSuccessful) {
                 val responseBody = response.body?.string() ?: return Result.failure(IOException("空响应"))
-                val content = parseResponseContent(responseBody)
-                Result.success(content)
+                Result.success(responseBody)
             } else {
                 Result.failure(IOException("API 错误：${response.code}"))
             }
         } catch (e: Exception) {
             Result.failure(e)
-        }
-    }
-    
-    private fun parseResponseContent(json: String): String {
-        return try {
-            val gson = com.google.gson.Gson()
-            val jsonObject = gson.fromJson(json, com.google.gson.JsonObject::class.java)
-            jsonObject.getAsJsonObject("choices")
-                ?.getAsJsonArray("choices")
-                ?.get(0)?.asJsonObject
-                ?.getAsJsonObject("message")
-                ?.get("content")?.asString ?: "无法解析响应"
-        } catch (e: Exception) {
-            json
         }
     }
 }
