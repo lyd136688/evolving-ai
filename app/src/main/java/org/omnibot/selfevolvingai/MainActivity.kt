@@ -18,11 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import org.omnibot.selfevolvingai.ui.HomeScreen
-import org.omnibot.selfevolvingai.ui.ChatScreen
-import org.omnibot.selfevolvingai.ui.TasksScreen
-import org.omnibot.selfevolvingai.ui.TerminalScreen
-import org.omnibot.selfevolvingai.ui.SettingsScreen
+import org.omnibot.selfevolvingai.ui.*
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -81,11 +77,20 @@ fun App() {
             startDestination = "home",
             modifier = Modifier.padding(padding)
         ) {
-            composable("home") { HomeScreen() }
+            composable("home") { HomeScreen(navController) }
             composable("chat") { ChatScreen() }
             composable("tasks") { TasksScreen() }
             composable("terminal") { TerminalScreen() }
             composable("settings") { SettingsScreen() }
+            composable("models") { ModelsScreen() }
+            composable("skills") { SkillsScreen() }
+            composable("files") { FilesScreen() }
+            composable("memory") { MemoryScreen() }
+            composable("schedule") { ScheduleScreen() }
+            composable("calendar") { CalendarScreen() }
+            composable("music") { MusicScreen() }
+            composable("image") { ImageScreen() }
+            composable("browser") { BrowserScreen() }
         }
     }
 }
