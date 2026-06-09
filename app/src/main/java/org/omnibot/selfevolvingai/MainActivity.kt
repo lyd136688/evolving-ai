@@ -32,7 +32,7 @@ fun App() {
         bottomBar = {
             NavigationBar {
                 NavigationBarItem(
-                    icon = { Text("🏠") },
+                    icon = { Text("") },
                     label = { Text("首页") },
                     selected = selectedTab == 0,
                     onClick = { selectedTab = 0; navController.navigate("home") }
@@ -44,16 +44,16 @@ fun App() {
                     onClick = { selectedTab = 1; navController.navigate("chat") }
                 )
                 NavigationBarItem(
-                    icon = { Text("") },
-                    label = { Text("技能") },
+                    icon = { Text("💻") },
+                    label = { Text("终端") },
                     selected = selectedTab == 2,
-                    onClick = { selectedTab = 2; navController.navigate("skills") }
+                    onClick = { selectedTab = 2; navController.navigate("terminal") }
                 )
                 NavigationBarItem(
-                    icon = { Text("🤖") },
-                    label = { Text("模型") },
+                    icon = { Text("📁") },
+                    label = { Text("文件") },
                     selected = selectedTab == 3,
-                    onClick = { selectedTab = 3; navController.navigate("models") }
+                    onClick = { selectedTab = 3; navController.navigate("files") }
                 )
                 NavigationBarItem(
                     icon = { Text("⚙️") },
@@ -71,8 +71,8 @@ fun App() {
         ) {
             composable("home") { HomeScreen() }
             composable("chat") { ChatScreen() }
-            composable("skills") { SkillsScreen() }
-            composable("models") { ModelsScreen() }
+            composable("terminal") { TerminalScreen() }
+            composable("files") { FilesScreen() }
             composable("settings") { SettingsScreen() }
         }
     }
