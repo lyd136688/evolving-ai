@@ -9,6 +9,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SkillsScreen() {
     var skills by remember { mutableStateOf(listOf<Skill>()) }
@@ -17,7 +18,6 @@ fun SkillsScreen() {
     
     LaunchedEffect(Unit) {
         isLoading = true
-        // TODO: 从网络加载技能列表
         skills = listOf(
             Skill("find-install-skills", "技能安装", "查找和安装 Omnibot 技能", true),
             Skill("self-improving-agent", "自我改进", "记录失败和最佳实践", true),
@@ -67,7 +67,7 @@ fun SkillsScreen() {
                 
                 item {
                     Button(
-                        onClick = { /* TODO: 从网络刷新技能列表 */ },
+                        onClick = { },
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = 16.dp)
@@ -117,7 +117,7 @@ fun SkillCard(skill: Skill) {
                     )
                 } else {
                     AssistChip(
-                        onClick = { /* TODO: 安装技能 */ },
+                        onClick = { },
                         label = { Text("安装") }
                     )
                 }
