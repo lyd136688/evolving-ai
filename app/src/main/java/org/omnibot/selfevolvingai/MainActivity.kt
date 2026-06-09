@@ -18,21 +18,28 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import org.omnibot.selfevolvingai.llm.LocalLLMEngine
 import org.omnibot.selfevolvingai.ui.*
 
 class MainActivity : ComponentActivity() {
+    
+    private lateinit var llmEngine: LocalLLMEngine
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        llmEngine = LocalLLMEngine(this)
+        llmEngine.loadLongTermMemory()
+        
         setContent {
             MaterialTheme {
-                App()
+                App(llmEngine)
             }
         }
     }
 }
 
 @Composable
-fun App() {
+fun App(llmEngine: LocalLLMEngine) {
     val navController = rememberNavController()
     var selectedTab by remember { mutableStateOf(0) }
     
@@ -40,7 +47,7 @@ fun App() {
         bottomBar = {
             NavigationBar {
                 NavigationBarItem(
-                    icon = { Text("🏠") },
+                    icon = { Text("") },
                     label = { Text("首页") },
                     selected = selectedTab == 0,
                     onClick = { selectedTab = 0; navController.navigate("home") }
@@ -52,22 +59,16 @@ fun App() {
                     onClick = { selectedTab = 1; navController.navigate("chat") }
                 )
                 NavigationBarItem(
-                    icon = { Text("") },
-                    label = { Text("任务") },
+                    icon = { Text("🤖") },
+                    label = { Text("模型") },
                     selected = selectedTab == 2,
-                    onClick = { selectedTab = 2; navController.navigate("tasks") }
-                )
-                NavigationBarItem(
-                    icon = { Text("💻") },
-                    label = { Text("终端") },
-                    selected = selectedTab == 3,
-                    onClick = { selectedTab = 3; navController.navigate("terminal") }
+                    onClick = { selectedTab = 2; navController.navigate("models") }
                 )
                 NavigationBarItem(
                     icon = { Text("⚙️") },
                     label = { Text("设置") },
-                    selected = selectedTab == 4,
-                    onClick = { selectedTab = 4; navController.navigate("settings") }
+                    selected = selectedTab == 3,
+                    onClick = { selectedTab = 3; navController.navigate("settings") }
                 )
             }
         }
@@ -78,19 +79,9 @@ fun App() {
             modifier = Modifier.padding(padding)
         ) {
             composable("home") { HomeScreen(navController) }
-            composable("chat") { ChatScreen() }
-            composable("tasks") { TasksScreen() }
-            composable("terminal") { TerminalScreen() }
-            composable("settings") { SettingsScreen() }
+            composable("chat") { ChatScreen(llmEngine) }
             composable("models") { ModelsScreen() }
-            composable("skills") { SkillsScreen() }
-            composable("files") { FilesScreen() }
-            composable("memory") { MemoryScreen() }
-            composable("schedule") { ScheduleScreen() }
-            composable("calendar") { CalendarScreen() }
-            composable("music") { MusicScreen() }
-            composable("image") { ImageScreen() }
-            composable("browser") { BrowserScreen() }
+            composable("settings") { SettingsScreen() }
         }
     }
 }
