@@ -12,16 +12,16 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import org.omnibot.selfevolvingai.network.ApiService
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen() {
     var apiKey by remember { mutableStateOf("") }
-    var apiEndpoint by remember { mutableStateOf("https://api.openai.com/v1") }
-    var defaultModel by remember { mutableStateOf("gpt-3.5-turbo") }
-    var workspacePath by remember { mutableStateOf("/workspace") }
-    var autoSaveMemory by remember { mutableStateOf(true) }
+    var apiProvider by remember { mutableStateOf("DeepSeek") }
+    var defaultModel by remember { mutableStateOf("deepseek-chat") }
     var showApiKey by remember { mutableStateOf(false) }
+    var isSaved by remember { mutableStateOf(false) }
     
     Column(
         modifier = Modifier
@@ -30,12 +30,37 @@ fun SettingsScreen() {
             .verticalScroll(rememberScrollState())
     ) {
         Text(
-            "⚙️ 设置",
+            "️ 设置",
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.padding(bottom = 24.dp)
         )
         
+        if (isSaved) {
+            Snackbar(
+                modifier = Modifier.padding(bottom = 16.dp),
+                containerColor = MaterialTheme.colorScheme.primaryContainer
+            ) {
+                Text("✅ 设置已保存！")
+            }
+        }
+        
         SettingsSection("API 配置") {
+            Text("选择 API 提供商", style = MaterialTheme.typography.bodyMedium)
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                ApiService.API_PROVIDERS.keys.take(3).forEach { provider ->
+                    FilterChip(
+                        selected = apiProvider == provider,
+                        onClick = { apiProvider = provider },
+                        label = { Text(provider) }
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            
             OutlinedTextField(
                 value = apiKey,
                 onValueChange = { apiKey = it },
@@ -50,15 +75,14 @@ fun SettingsScreen() {
                     }
                 }
             )
-            Spacer(modifier = Modifier.height(16.dp))
-            OutlinedTextField(
-                value = apiEndpoint,
-                onValueChange = { apiEndpoint = it },
-                label = { Text("API 端点") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                "💡 国内推荐：DeepSeek / 智谱 AI / 通义千问",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(16.dp))
+            
             OutlinedTextField(
                 value = defaultModel,
                 onValueChange = { defaultModel = it },
@@ -70,41 +94,16 @@ fun SettingsScreen() {
         
         Spacer(modifier = Modifier.height(24.dp))
         
-        SettingsSection("工作区配置") {
-            OutlinedTextField(
-                value = workspacePath,
-                onValueChange = { workspacePath = it },
-                label = { Text("工作区路径") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
-        }
-        
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        SettingsSection("记忆系统") {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text("自动保存记忆", style = MaterialTheme.typography.bodyLarge)
-                Switch(checked = autoSaveMemory, onCheckedChange = { autoSaveMemory = it })
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(24.dp))
-        
         SettingsSection("关于") {
-            Text("版本：2.0.0", style = MaterialTheme.typography.bodyMedium)
-            Text("构建：GitHub Actions", style = MaterialTheme.typography.bodyMedium)
+            Text("版本：2.1.0", style = MaterialTheme.typography.bodyMedium)
             Text("架构：NowInAndroid + Compose", style = MaterialTheme.typography.bodyMedium)
+            Text("硬件检测：已启用", style = MaterialTheme.typography.bodyMedium)
         }
         
         Spacer(modifier = Modifier.height(24.dp))
         
         Button(
-            onClick = { },
+            onClick = { isSaved = true },
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("💾 保存设置")
