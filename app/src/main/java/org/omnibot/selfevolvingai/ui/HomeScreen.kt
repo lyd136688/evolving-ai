@@ -20,45 +20,18 @@ fun HomeScreen(navController: NavController) {
         Feature("🤖", "模型管理", "下载本地量化大模型", "models"),
         Feature("💻", "终端执行", "运行 Shell 命令", "terminal"),
         Feature("", "文件管理", "读写工作区文件", "files"),
-        Feature("🌐", "浏览器", "网页浏览和内容提取", "browser"),
         Feature("🧠", "记忆系统", "长期/短期记忆", "memory"),
-        Feature("📋", "任务分发", "并行执行多个子任务", "tasks"),
-        Feature("⏰", "定时任务", "创建自动化任务", "schedule"),
-        Feature("📅", "日历闹钟", "管理日程提醒", "calendar"),
-        Feature("🎵", "音乐播放", "系统级音乐控制", "music"),
-        Feature("🖼️", "图片生成", "AI 生成图像", "image")
+        Feature("📋", "任务分发", "并行执行多个子任务", "tasks")
     )
     
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Text(
-            "🧠 自进化 AI 系统",
-            style = MaterialTheme.typography.headlineLarge,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-        Text(
-            "版本：2.1.0 | 状态：在线",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(bottom = 24.dp)
-        )
+    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        Text("🧠 自进化 AI 系统", style = MaterialTheme.typography.headlineLarge, modifier = Modifier.padding(bottom = 8.dp))
+        Text("版本：3.0.0 | 状态：在线", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(bottom = 24.dp))
+        Text("功能列表", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 16.dp))
         
-        Text(
-            "功能列表",
-            style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-        
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             items(features) { feature ->
-                FeatureCard(feature, onClick = {
-                    navController.navigate(feature.route)
-                })
+                FeatureCard(feature, onClick = { navController.navigate(feature.route) })
             }
         }
     }
@@ -68,33 +41,12 @@ data class Feature(val icon: String, val title: String, val desc: String, val ro
 
 @Composable
 fun FeatureCard(feature: Feature, onClick: () -> Unit) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = feature.icon,
-                style = MaterialTheme.typography.headlineMedium
-            )
+    Card(modifier = Modifier.fillMaxWidth().clickable(onClick = onClick), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
+        Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(text = feature.icon, style = MaterialTheme.typography.headlineMedium)
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = feature.title,
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Text(
-                    text = feature.desc,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Text(text = feature.title, style = MaterialTheme.typography.titleMedium)
+                Text(text = feature.desc, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Text("→", style = MaterialTheme.typography.titleMedium)
         }
