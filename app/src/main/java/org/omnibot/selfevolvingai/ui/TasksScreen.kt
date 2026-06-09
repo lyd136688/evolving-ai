@@ -31,7 +31,7 @@ fun TasksScreen() {
             .padding(16.dp)
     ) {
         Text(
-            "📋 任务分发",
+            " 任务分发",
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.padding(bottom = 8.dp)
         )
@@ -43,47 +43,23 @@ fun TasksScreen() {
             modifier = Modifier.padding(bottom = 16.dp)
         )
         
-        // 配置卡片
         Card(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text("并发度设置", style = MaterialTheme.typography.titleMedium)
+                Text("并发度：$concurrency", style = MaterialTheme.typography.titleMedium)
                 Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    FilterChip(
-                        selected = concurrency == 1,
-                        onClick = { concurrency = 1 },
-                        label = { Text("1 个") }
-                    )
-                    FilterChip(
-                        selected = concurrency == 2,
-                        onClick = { concurrency = 2 },
-                        label = { Text("2 个") }
-                    )
-                    FilterChip(
-                        selected = concurrency == 3,
-                        onClick = { concurrency = 3 },
-                        label = { Text("3 个") }
-                    )
-                    FilterChip(
-                        selected = concurrency == 4,
-                        onClick = { concurrency = 4 },
-                        label = { Text("4 个") }
-                    )
-                    FilterChip(
-                        selected = concurrency == 6,
-                        onClick = { concurrency = 6 },
-                        label = { Text("6 个") }
-                    )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf(1, 2, 3, 4, 6).forEach { num ->
+                        FilterChip(
+                            selected = concurrency == num,
+                            onClick = { concurrency = num },
+                            label = { Text("$num 个") }
+                        )
+                    }
                 }
             }
         }
         
         Spacer(modifier = Modifier.height(16.dp))
-        
-        // 任务列表
         Text("任务列表", style = MaterialTheme.typography.titleMedium)
         Spacer(modifier = Modifier.height(8.dp))
         
@@ -101,7 +77,6 @@ fun TasksScreen() {
             }
             
             item {
-                // 添加任务按钮
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
@@ -109,7 +84,7 @@ fun TasksScreen() {
                     ),
                     onClick = {
                         if (newTaskInput.isNotBlank()) {
-                            tasks = tasks + TaskItem(newTaskInput, false)
+                            tasks = tasks + TaskItem(newTaskInput)
                             newTaskInput = ""
                         }
                     }
@@ -130,7 +105,7 @@ fun TasksScreen() {
                         )
                         IconButton(onClick = {
                             if (newTaskInput.isNotBlank()) {
-                                tasks = tasks + TaskItem(newTaskInput, false)
+                                tasks = tasks + TaskItem(newTaskInput)
                                 newTaskInput = ""
                             }
                         }) {
@@ -143,7 +118,6 @@ fun TasksScreen() {
         
         Spacer(modifier = Modifier.height(16.dp))
         
-        // 执行按钮
         Button(
             onClick = {
                 if (tasks.isNotEmpty() && apiKey.isNotBlank()) {
@@ -154,20 +128,14 @@ fun TasksScreen() {
                     
                     scope.launch {
                         val taskDescriptions = tasks.map { it.description }
-                        val result = toolManager.subagentDispatch(
+                        val result = toolManager.dispatchTasks(
                             tasks = taskDescriptions,
                             concurrency = concurrency,
                             mergeInstruction = "按顺序返回每个任务的结果"
                         )
                         
-                        result.onSuccess { response ->
-                            results = tasks.mapIndexed { index, task ->
-                                TaskResult(index, task.description, "完成", response)
-                            }
-                        }.onFailure { error ->
-                            results = tasks.mapIndexed { index, task ->
-                                TaskResult(index, task.description, "失败", error.message)
-                            }
+                        results = tasks.mapIndexed { index, task ->
+                            TaskResult(index, task.description, "完成", result)
                         }
                         isRunning = false
                     }
@@ -177,10 +145,7 @@ fun TasksScreen() {
             enabled = tasks.isNotEmpty() && !isRunning && apiKey.isNotBlank()
         ) {
             if (isRunning) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(20.dp),
-                    color = MaterialTheme.colorScheme.onPrimary
-                )
+                CircularProgressIndicator(modifier = Modifier.size(20.dp), color = MaterialTheme.colorScheme.onPrimary)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("执行中...")
             } else {
@@ -189,40 +154,23 @@ fun TasksScreen() {
         }
         
         if (apiKey.isBlank()) {
-            Text(
-                "️ 请先在设置中配置 API Key",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(top = 8.dp)
-            )
+            Text("⚠️ 请先在设置中配置 API Key", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 8.dp))
         }
     }
 }
 
-data class TaskItem(val description: String, var completed: Boolean = false)
-
-data class TaskResult(
-    val taskIndex: Int,
-    val description: String,
-    val status: String,
-    val result: String?
-)
+data class TaskItem(val description: String)
+data class TaskResult(val taskIndex: Int, val description: String, val status: String, val result: String?)
 
 @Composable
-fun TaskItemCard(
-    task: TaskItem,
-    index: Int,
-    onRemove: () -> Unit,
-    result: TaskResult?
-) {
+fun TaskItemCard(task: TaskItem, index: Int, onRemove: () -> Unit, result: TaskResult?) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = when (result?.status) {
                 "完成" -> MaterialTheme.colorScheme.primaryContainer
                 "失败" -> MaterialTheme.colorScheme.errorContainer
-                "等待中" -> MaterialTheme.colorScheme.surfaceVariant
-                else -> MaterialTheme.colorScheme.surface
+                else -> MaterialTheme.colorScheme.surfaceVariant
             }
         )
     ) {
@@ -236,47 +184,24 @@ fun TaskItemCard(
                     Text(
                         text = when (result?.status) {
                             "完成" -> "✅"
-                            "失败" -> "❌"
-                            "等待中" -> "⏳"
-                            else -> ""
+                            "失败" -> ""
+                            else -> "⏳"
                         },
                         modifier = Modifier.padding(end = 8.dp)
                     )
                     Column {
-                        Text(
-                            "任务 ${index + 1}",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        Text("任务 ${index + 1}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(task.description, style = MaterialTheme.typography.bodyMedium)
                     }
                 }
-                IconButton(onClick = onRemove) {
-                    Text("❌")
-                }
+                IconButton(onClick = onRemove) { Text("❌") }
             }
-            
             if (result?.result != null) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Divider()
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    "结果：${result.result.take(200)}${if (result.result.length > 200) "..." else ""}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Text("结果：${result.result.take(200)}${if (result.result.length > 200) "..." else ""}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }
 }
-
-// 在 ToolManager.kt 中添加：
-/*
-    suspend fun subagentDispatch(
-        tasks: List<String>,
-        concurrency: Int = 2,
-        mergeInstruction: String = ""
-    ): Result<String> = withContext(Dispatchers.IO) {
-        client.subagentDispatch(tasks, concurrency, mergeInstruction)
-    }
-*/
