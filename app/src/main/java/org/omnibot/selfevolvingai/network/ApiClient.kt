@@ -5,105 +5,74 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
 
-class ApiClient(
-    private val apiKey: String,
-    private val baseUrl: String = "https://api.openai.com/v1"
-) {
-    private val client = OkHttpClient()
-    private val mediaType = "application/json; charset=utf-8".toMediaType()
+class ApiService {
     
-    data class ChatRequest(
-        val model: String,
-        val messages: List<Message>,
-        val maxTokens: Int = 1024
-    )
+    companion object {
+        private val MEDIA_TYPE = "application/json; charset=utf-8".toMediaType()
+        
+        val API_PROVIDERS = mapOf(
+            "OpenAI" to "https://api.openai.com/v1",
+            "DeepSeek" to "https://api.deepseek.com/v1",
+            "智谱 AI" to "https://open.bigmodel.cn/api/paas/v4",
+            "通义千问" to "https://dashscope.aliyuncs.com/compatible-mode/v1",
+            "文心一言" to "https://qianfan.baidubce.com/v2",
+            "月之暗面" to "https://api.moonshot.cn/v1"
+        )
+    }
     
-    data class Message(
-        val role: String,
-        val content: String
-    )
+    data class ChatMessage(val role: String, val content: String)
+    data class ChatRequest(val model: String, val messages: List<ChatMessage>, val maxTokens: Int = 2048)
     
-    data class ChatResponse(
-        val choices: List<Choice>,
-        val usage: Usage?
-    )
-    
-    data class Choice(
-        val message: Message,
-        val finishReason: String?
-    )
-    
-    data class Usage(
-        val promptTokens: Int,
-        val completionTokens: Int,
-        val totalTokens: Int
-    )
-    
-    fun chat(request: ChatRequest): Result<String> {
+    fun chat(apiKey: String, baseUrl: String, model: String, messages: List<ChatMessage>): Result<String> {
         return try {
-            val json = buildJson(request)
-            val body = json.toRequestBody(mediaType)
+            val client = OkHttpClient().newBuilder()
+                .connectTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+                .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+                .build()
             
-            val httpRequest = Request.Builder()
+            val messagesJson = messages.joinToString(",") { 
+                """{"role":"${it.role}","content":"${it.content.replace("\"", "\\\"")}"}""" 
+            }
+            
+            val jsonBody = """{
+                "model": "$model",
+                "messages": [$messagesJson],
+                "max_tokens": 2048,
+                "stream": false
+            }""".trimIndent()
+            
+            val request = Request.Builder()
                 .url("$baseUrl/chat/completions")
                 .addHeader("Authorization", "Bearer $apiKey")
                 .addHeader("Content-Type", "application/json")
-                .post(body)
+                .post(jsonBody.toRequestBody(MEDIA_TYPE))
                 .build()
             
-            val response = client.newCall(httpRequest).execute()
+            val response = client.newCall(request).execute()
             
             if (response.isSuccessful) {
-                response.body?.string()?.let {
-                    Result.success(parseResponse(it))
-                } ?: Result.failure(IOException("Empty response"))
+                val responseBody = response.body?.string() ?: return Result.failure(IOException("空响应"))
+                val content = parseResponseContent(responseBody)
+                Result.success(content)
             } else {
-                Result.failure(IOException("API Error: ${response.code}"))
+                Result.failure(IOException("API 错误：${response.code}"))
             }
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
     
-    private fun buildJson(request: ChatRequest): String {
-        val messagesJson = request.messages.joinToString(",") { 
-            """{"role":"${it.role}","content":"${it.content}"}""" 
-        }
-        return """{
-            "model": "${request.model}",
-            "messages": [$messagesJson],
-            "max_tokens": ${request.maxTokens}
-        }"""
-    }
-    
-    private fun parseResponse(json: String): String {
-        // 简单解析，实际应使用 Gson
-        return json
-    }
-    
-    suspend fun fetchSkills(): Result<List<SkillInfo>> {
+    private fun parseResponseContent(json: String): String {
         return try {
-            val httpRequest = Request.Builder()
-                .url("https://raw.githubusercontent.com/omnibot-ai/omnibot/main/skills/index.json")
-                .get()
-                .build()
-            
-            val response = client.newCall(httpRequest).execute()
-            
-            if (response.isSuccessful) {
-                Result.success(emptyList()) // TODO: 解析技能列表
-            } else {
-                Result.failure(IOException("Fetch failed: ${response.code}"))
-            }
+            val gson = com.google.gson.Gson()
+            val jsonObject = gson.fromJson(json, com.google.gson.JsonObject::class.java)
+            jsonObject.getAsJsonObject("choices")
+                ?.getAsJsonArray("choices")
+                ?.get(0)?.asJsonObject
+                ?.getAsJsonObject("message")
+                ?.get("content")?.asString ?: "无法解析响应"
         } catch (e: Exception) {
-            Result.failure(e)
+            json
         }
     }
-    
-    data class SkillInfo(
-        val id: String,
-        val name: String,
-        val description: String,
-        val url: String
-    )
 }
