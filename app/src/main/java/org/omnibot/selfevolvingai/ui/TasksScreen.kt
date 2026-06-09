@@ -10,6 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import org.omnibot.selfevolvingai.tools.ToolManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,7 +32,7 @@ fun TasksScreen() {
             .padding(16.dp)
     ) {
         Text(
-            " 任务分发",
+            "📋 任务分发",
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.padding(bottom = 8.dp)
         )
@@ -109,7 +110,7 @@ fun TasksScreen() {
                                 newTaskInput = ""
                             }
                         }) {
-                            Text("➕")
+                            Text("")
                         }
                     }
                 }
@@ -184,7 +185,7 @@ fun TaskItemCard(task: TaskItem, index: Int, onRemove: () -> Unit, result: TaskR
                     Text(
                         text = when (result?.status) {
                             "完成" -> "✅"
-                            "失败" -> ""
+                            "失败" -> "❌"
                             else -> "⏳"
                         },
                         modifier = Modifier.padding(end = 8.dp)
