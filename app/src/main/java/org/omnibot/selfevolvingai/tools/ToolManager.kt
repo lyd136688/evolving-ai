@@ -25,8 +25,12 @@ class ToolManager(
         client.memorySearch(query).getOrDefault("搜索失败")
     }
     
-    suspend fun openUrl(url: String): String = withContext(Dispatchers.IO) {
-        client.browserNavigate(url).getOrDefault("打开失败")
+    suspend fun dispatchTasks(
+        tasks: List<String>,
+        concurrency: Int = 2,
+        mergeInstruction: String = ""
+    ): String = withContext(Dispatchers.IO) {
+        client.subagentDispatch(tasks, concurrency, mergeInstruction).getOrDefault("分发失败")
     }
     
     suspend fun listApps(query: String = ""): String = withContext(Dispatchers.IO) {
