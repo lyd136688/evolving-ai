@@ -9,7 +9,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.*
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen() {
     var messages by remember { mutableStateOf(listOf<Message>()) }
@@ -20,7 +23,9 @@ fun ChatScreen() {
     
     LaunchedEffect(messages.size) {
         scope.launch {
-            listState.animateScrollToItem(messages.size - 1)
+            if (messages.isNotEmpty()) {
+                listState.animateScrollToItem(messages.size - 1)
+            }
         }
     }
     
@@ -77,11 +82,8 @@ fun ChatScreen() {
                 onClick = {
                     if (input.isNotBlank()) {
                         messages = messages + Message("user", input)
-                        val userInput = input
                         input = ""
                         isLoading = true
-                        // TODO: 调用 AI API
-                        isLoading = false
                     }
                 },
                 enabled = input.isNotBlank() && !isLoading
@@ -111,11 +113,11 @@ fun MessageBubble(message: Message) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = if (message.role == "user") "👤 你" else "🤖 AI",
+                    text = if (message.role == "user") " 你" else "🤖 AI",
                     style = MaterialTheme.typography.labelMedium
                 )
                 Text(
-                    text = android.text.format.DateFormat.format("HH:mm", message.timestamp).toString(),
+                    text = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(message.timestamp)),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
