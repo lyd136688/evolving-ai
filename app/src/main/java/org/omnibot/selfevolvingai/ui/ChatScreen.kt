@@ -29,58 +29,27 @@ fun ChatScreen() {
     
     LaunchedEffect(messages.size) {
         scope.launch {
-            if (messages.isNotEmpty()) {
-                listState.animateScrollToItem(messages.size - 1)
-            }
+            if (messages.isNotEmpty()) listState.animateScrollToItem(messages.size - 1)
         }
     }
     
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Text(
-            "💬 AI 对话",
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-        
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                "当前：$apiProvider - $model",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            TextButton(onClick = { /* 打开设置 */ }) {
-                Text("⚙️ 配置")
-            }
+    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        Text("💬 AI 对话", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(bottom = 8.dp))
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text("当前：$apiProvider - $model", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        
         Spacer(modifier = Modifier.height(16.dp))
         
         LazyColumn(
             state = listState,
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth(),
+            modifier = Modifier.weight(1f).fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(messages) { message ->
-                MessageBubble(message)
-            }
-            
+            items(messages) { message -> MessageBubble(message) }
             if (isLoading) {
                 item {
                     Row(modifier = Modifier.fillMaxWidth()) {
-                        CircularProgressIndicator(
-                            modifier = Modifier
-                                .size(24.dp)
-                                .padding(end = 8.dp)
-                        )
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp).padding(end = 8.dp))
                         Text("AI 思考中...", style = MaterialTheme.typography.bodyMedium)
                     }
                 }
@@ -90,27 +59,15 @@ fun ChatScreen() {
         Spacer(modifier = Modifier.height(16.dp))
         
         if (apiKey.isBlank()) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.warningContainer
-                )
-            ) {
+            Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f))) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text("⚠️ 请先配置 API Key", style = MaterialTheme.typography.titleMedium)
                     Text("前往 设置 页面配置 API Key 后即可使用对话功能", style = MaterialTheme.typography.bodySmall)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Button(onClick = { /* 导航到设置 */ }) {
-                        Text("去配置")
-                    }
                 }
             }
         }
         
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(
                 value = input,
                 onValueChange = { input = it },
@@ -126,7 +83,6 @@ fun ChatScreen() {
                         val userInput = input
                         input = ""
                         isLoading = true
-                        
                         scope.launch {
                             val result = apiService.chat(
                                 apiKey = apiKey,
@@ -134,7 +90,6 @@ fun ChatScreen() {
                                 model = model,
                                 messages = messages.map { ApiService.ChatMessage(it.role, it.content) }
                             )
-                            
                             isLoading = false
                             result.onSuccess { response ->
                                 messages = messages + Message("assistant", response)
@@ -145,9 +100,7 @@ fun ChatScreen() {
                     }
                 },
                 enabled = input.isNotBlank() && !isLoading && apiKey.isNotBlank()
-            ) {
-                Text("发送")
-            }
+            ) { Text("发送") }
         }
     }
 }
@@ -167,23 +120,9 @@ fun MessageBubble(message: Message) {
         )
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = when (message.role) {
-                        "user" -> "👤 你"
-                        "assistant" -> "🤖 AI"
-                        else -> "ℹ️ 系统"
-                    },
-                    style = MaterialTheme.typography.labelMedium
-                )
-                Text(
-                    text = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(message.timestamp)),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(text = when (message.role) { "user" -> "👤 你" "assistant" -> "🤖 AI" else -> "ℹ️" }, style = MaterialTheme.typography.labelMedium)
+                Text(text = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(message.timestamp)), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Spacer(modifier = Modifier.height(4.dp))
             Text(message.content, style = MaterialTheme.typography.bodyMedium)
