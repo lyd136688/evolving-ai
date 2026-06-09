@@ -22,12 +22,7 @@ fun SettingsScreen() {
     var showApiKey by remember { mutableStateOf(false) }
     var isSaved by remember { mutableStateOf(false) }
     
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState())
-    ) {
+    Column(modifier = Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())) {
         Text("⚙️ 设置", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(bottom = 24.dp))
         
         if (isSaved) {
@@ -40,7 +35,6 @@ fun SettingsScreen() {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text("API 配置", style = MaterialTheme.typography.titleMedium)
                 Spacer(modifier = Modifier.height(16.dp))
-                
                 Text("选择 API 提供商", style = MaterialTheme.typography.bodyMedium)
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -49,20 +43,9 @@ fun SettingsScreen() {
                     }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
-                
-                OutlinedTextField(
-                    value = apiKey,
-                    onValueChange = { apiKey = it },
-                    label = { Text("API Key") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    visualTransformation = if (showApiKey) VisualTransformation.None else PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
-                )
+                OutlinedTextField(value = apiKey, onValueChange = { apiKey = it }, label = { Text("API Key") }, modifier = Modifier.fillMaxWidth(), singleLine = true, visualTransformation = if (showApiKey) VisualTransformation.None else PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password))
                 Spacer(modifier = Modifier.height(8.dp))
-                Row {
-                    TextButton(onClick = { showApiKey = !showApiKey }) { Text(if (showApiKey) "🙈 隐藏" else "👁️ 显示") }
-                }
+                TextButton(onClick = { showApiKey = !showApiKey }) { Text(if (showApiKey) "🙈 隐藏" else "👁️ 显示") }
             }
         }
         
@@ -72,13 +55,7 @@ fun SettingsScreen() {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text("服务器配置", style = MaterialTheme.typography.titleMedium)
                 Spacer(modifier = Modifier.height(16.dp))
-                OutlinedTextField(
-                    value = serverUrl,
-                    onValueChange = { serverUrl = it },
-                    label = { Text("Omnibot 服务器 URL") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
+                OutlinedTextField(value = serverUrl, onValueChange = { serverUrl = it }, label = { Text("Omnibot 服务器 URL") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
             }
         }
         
