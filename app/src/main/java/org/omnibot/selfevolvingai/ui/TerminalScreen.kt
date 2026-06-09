@@ -5,13 +5,16 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
+import org.omnibot.selfevolvingai.tools.ToolManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,7 +34,7 @@ fun TerminalScreen() {
             .padding(16.dp)
     ) {
         Text(
-            "💻 终端执行",
+            " 终端执行",
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.padding(bottom = 8.dp)
         )
@@ -43,7 +46,6 @@ fun TerminalScreen() {
             modifier = Modifier.padding(bottom = 16.dp)
         )
         
-        // 输出区域
         Card(
             modifier = Modifier
                 .weight(1f)
@@ -81,7 +83,6 @@ fun TerminalScreen() {
         
         Spacer(modifier = Modifier.height(16.dp))
         
-        // 配置区域
         Card(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text("服务器配置", style = MaterialTheme.typography.titleSmall)
@@ -109,7 +110,6 @@ fun TerminalScreen() {
         
         Spacer(modifier = Modifier.height(16.dp))
         
-        // 输入区域
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -142,7 +142,6 @@ fun TerminalScreen() {
         
         Spacer(modifier = Modifier.height(8.dp))
         
-        // 快捷命令
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
