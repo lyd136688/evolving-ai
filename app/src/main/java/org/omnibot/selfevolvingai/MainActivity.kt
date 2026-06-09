@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import org.omnibot.selfevolvingai.ui.*
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,7 +44,7 @@ fun App() {
                     onClick = { selectedTab = 1; navController.navigate("chat") }
                 )
                 NavigationBarItem(
-                    icon = { Text("📚") },
+                    icon = { Text("") },
                     label = { Text("技能") },
                     selected = selectedTab == 2,
                     onClick = { selectedTab = 2; navController.navigate("skills") }
