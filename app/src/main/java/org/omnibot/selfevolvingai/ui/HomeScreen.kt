@@ -9,17 +9,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen() {
     val features = listOf(
         Feature("💬", "AI 对话", "与 AI 助手自然对话"),
-        Feature("📚", "技能系统", "自动下载和加载技能"),
-        Feature("", "模型管理", "下载本地量化大模型"),
+        Feature("", "技能系统", "自动下载和加载技能"),
+        Feature("🤖", "模型管理", "下载本地量化大模型"),
         Feature("💻", "终端执行", "运行 Shell 命令"),
         Feature("📁", "文件管理", "读写工作区文件"),
         Feature("🌐", "浏览器", "网页浏览和内容提取"),
-        Feature("", "记忆系统", "长期/短期记忆"),
-        Feature("⏰", "定时任务", "创建自动化任务"),
+        Feature("🧠", "记忆系统", "长期/短期记忆"),
+        Feature("", "定时任务", "创建自动化任务"),
         Feature("📅", "日历闹钟", "管理日程提醒"),
         Feature("🎵", "音乐播放", "系统级音乐控制")
     )
