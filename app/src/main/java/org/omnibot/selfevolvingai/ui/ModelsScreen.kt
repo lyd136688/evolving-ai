@@ -9,6 +9,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ModelsScreen() {
     var models by remember { mutableStateOf(listOf<Model>()) }
@@ -29,7 +30,7 @@ fun ModelsScreen() {
             .padding(16.dp)
     ) {
         Text(
-            "🤖 模型管理",
+            " 模型管理",
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.padding(bottom = 16.dp)
         )
@@ -97,7 +98,7 @@ fun ModelCard(model: Model) {
                 Column(horizontalAlignment = Alignment.End) {
                     Text(model.status, style = MaterialTheme.typography.bodySmall)
                     Spacer(modifier = Modifier.height(8.dp))
-                    Button(onClick = { /* TODO: 开始下载 */ }) {
+                    Button(onClick = { }) {
                         Text("下载")
                     }
                 }
